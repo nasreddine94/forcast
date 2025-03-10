@@ -86,18 +86,66 @@ export const formatDate = (timestamp: number): string => {
   });
 };
 
-const processForecastData = (forecastList: any[]): any[] => {
-  // Validate input
+interface WeatherApiResponse {
+  main: {
+    temp: number;
+    feels_like: number;
+    temp_min: number;
+    temp_max: number;
+    humidity: number;
+  };
+  weather: Array<{
+    main: string;
+    icon: string;
+  }>;
+  wind: {
+    speed: number;
+  };
+  sys: {
+    sunrise: number;
+    sunset: number;
+  };
+  dt: number;
+}
+
+interface ForecastItem {
+  dt: number;
+  main: {
+    temp_min: number;
+    temp_max: number;
+  };
+  weather: Array<{
+    main: string;
+    icon: string;
+  }>;
+}
+
+const processForecastData = (forecastList: ForecastItem[]): Array<{
+  dt: number;
+  temp_min: number;
+  temp_max: number;
+  weather: {
+    main: string;
+    icon: string;
+  };
+}> => {
   if (!Array.isArray(forecastList)) {
     console.error('Invalid forecast list:', forecastList);
     return [];
   }
   
-  const dailyData: { [key: string]: any } = {};
+  const dailyData: { [key: string]: {
+    dt: number;
+    temp_min: number;
+    temp_max: number;
+    weather: {
+      main: string;
+      icon: string;
+    };
+  }} = {};
 
-  forecastList.forEach((item: any) => {
+  forecastList.forEach((item: ForecastItem) => {
     try {
-      // More comprehensive validation with safe property access
       if (!item) {
         console.warn('Skipping null or undefined forecast item');
         return;
@@ -108,8 +156,7 @@ const processForecastData = (forecastList: any[]): any[] => {
         return;
       }
       
-      // Safely check nested properties
-      const mainData = item.main || {};
+      const mainData = item.main;
       const tempMin = mainData.temp_min;
       const tempMax = mainData.temp_max;
       
@@ -118,7 +165,7 @@ const processForecastData = (forecastList: any[]): any[] => {
         return;
       }
       
-      const weatherArray = item.weather || [];
+      const weatherArray = item.weather;
       const weatherData = weatherArray[0];
       
       if (!weatherData || !weatherData.main || !weatherData.icon) {

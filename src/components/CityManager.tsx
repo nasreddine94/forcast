@@ -48,15 +48,21 @@ export default function CityManager({ onClose }: CityManagerProps) {
       const data = await response.json();
 
       const results = Array.isArray(data) ? data : [data];
-      const formattedResults: SearchResult[] = results.map((item: any) => ({
-        id: Math.random() * 1000000, // Generate temporary ID
-        name: item.name,
-        country: item.country,
+      const formattedResults: SearchResult[] = results.map((result: {
+        name: string;
+        country: string;
+        state?: string;
+        lat: number;
+        lon: number;
+      }) => ({
+        id: Math.random() * 1000000,
+        name: result.name,
+        country: result.country,
         coordinates: {
-          lat: item.lat,
-          lon: item.lon
+          lat: result.lat,
+          lon: result.lon
         },
-        displayName: `${item.name}, ${item.state || ''} ${item.country}`
+        displayName: `${result.name}, ${result.state || ''} ${result.country}`
       }));
 
       setSearchResults(formattedResults);

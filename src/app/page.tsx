@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CITIES } from '@/types/weather';
+import Image from 'next/image';
+import { CITIES, WeatherData, DailyForecast } from '@/types/weather';
 import { fetchWeatherData, celsiusToFahrenheit, formatTime, formatDate } from '@/utils/weather';
 import CityManager from '@/components/CityManager';
 
 export default function Home() {
-  const [weatherData, setWeatherData] = useState<{ [key: string]: any }>({});
+  const [weatherData, setWeatherData] = useState<{ [key: string]: WeatherData }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFahrenheit, setIsFahrenheit] = useState(false);
@@ -18,17 +19,21 @@ export default function Home() {
       try {
         setLoading(true);
         setError(null);
-        const data: { [key: string]: any } = {};
+        const data: { [key: string]: WeatherData } = {};
 
         await Promise.all(
           CITIES.map(async (city) => {
-            const cityWeather = await fetchWeatherData(city);
-            data[city.id] = cityWeather;
+            try {
+              const cityWeather = await fetchWeatherData(city);
+              data[city.id] = cityWeather;
+            } catch (error) {
+              console.error(`Error fetching weather for ${city.name}:`, error);
+            }
           })
         );
 
         setWeatherData(data);
-      } catch (err) {
+      } catch (error) {
         setError('Failed to fetch weather data. Please try again later.');
       } finally {
         setLoading(false);
@@ -39,7 +44,7 @@ export default function Home() {
     const interval = setInterval(fetchAllCitiesWeather, 300000); // Refresh every 5 minutes
 
     return () => clearInterval(interval);
-  }, [CITIES]);
+  }, []); // Remove CITIES from dependency array
 
   const getWeatherBackground = (condition: string) => {
     const conditions: { [key: string]: string } = {
@@ -158,12 +163,14 @@ export default function Home() {
                     <div className="mt-4 pt-4 border-t border-white/20">
                       <h3 className="text-lg font-semibold mb-2">7-Day Forecast</h3>
                       <div className="flex gap-4 overflow-x-auto pb-2">
-                        {data.daily.map((day: any, index: number) => (
+                        {data.daily.map((day: DailyForecast, index: number) => (
                           <div key={index} className="flex flex-col items-center min-w-[4rem]">
                             <p className="text-sm">{formatDate(day.date)}</p>
-                            <img
+                            <Image
                               src={`https://openweathermap.org/img/wn/${day.icon}.png`}
                               alt={day.condition}
+                              width={32}
+                              height={32}
                               className="w-8 h-8"
                             />
                             <p className="text-sm font-semibold">
